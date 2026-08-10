@@ -1,0 +1,29 @@
+# DonorLoop — shared dependency list
+# Everyone installs from this exact file so all 4 environments match.
+# Install with: pip install -r requirements.txt
+
+# --- NLP (Module B) ---
+spacy==3.7.5
+anthropic==0.34.2          # for LLM-assisted extraction / message generation
+
+# --- Rules, ranking, data (Module A) ---
+pandas==2.2.2
+geopy==2.4.1
+
+# --- Agent orchestration (Module C) ---
+apscheduler==3.10.4
+
+# --- Simulated outreach (Module C, optional) ---
+twilio==9.2.3               # only needed if you wire up the Twilio sandbox
+
+# --- Storage ---
+# sqlite3 is built into Python — no install needed
+
+# --- Dashboard (Module D) ---
+streamlit==1.37.1
+
+# --- Evaluation (Module D) ---
+scikit-learn==1.5.1
+
+# --- General ---
+python-dotenv==1.0.1         # loads the .env file into config.py

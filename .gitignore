@@ -1,0 +1,16 @@
+# Environments
+venv/
+env/
+__pycache__/
+*.pyc
+
+# Secrets — never commit
+.env
+
+# Local database (each person regenerates it from schema.sql)
+db/*.db
+
+# OS/editor junk
+.DS_Store
+.vscode/
+.idea/

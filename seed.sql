@@ -2,93 +2,27 @@
 -- DonorLoop SQLite Seed Data
 -- Synthetic/demo data only
 -- ============================================================
+--
+-- NOTE: Donor data is no longer seeded here. Donors come from
+-- data/synthetic_donors.csv via `python data/load_donors.py`
+-- (200 Faker-generated donors, one source of truth instead of
+-- duplicating a hand-written donor list here).
+--
+-- RUN ORDER for a fresh demo database:
+--   1.python -c "import sqlite3, pathlib; pathlib.Path('db').mkdir(exist_ok=True); conn = sqlite3.connect('db/donorloop.db'); conn.executescript(open('schema.sql').read()); conn.close(); print('schema applied')"
+--   2.python data/load_donors.py
+--   3.python -c "import sqlite3; conn = sqlite3.connect('db/donorloop.db'); conn.executescript(open('seed.sql').read()); conn.close(); print('seed applied')"
 
 PRAGMA foreign_keys = ON;
 
 -- ============================================================
 -- OPTIONAL: Clear existing seed data before re-running
+-- (donors is intentionally NOT cleared here - that's load_donors.py's job)
 -- ============================================================
 
 DELETE FROM escalation_log;
 DELETE FROM outreach_log;
 DELETE FROM requests;
-DELETE FROM donors;
-
--- ============================================================
--- SYNTHETIC DONOR DATA
--- ============================================================
-
-INSERT INTO donors
-(name, blood_type, city, latitude, longitude, phone, last_donation_date)
-VALUES
-
--- Islamabad
-('Ali Khan', 'O+', 'Islamabad',
- 33.6844, 73.0479, '03001234567', '2026-04-01'),
-
-('Hassan Ahmed', 'A+', 'Islamabad',
- 33.7000, 73.0500, '03011234567', '2026-03-15'),
-
-('Usman Tariq', 'B+', 'Islamabad',
- 33.6800, 73.0400, '03021234567', '2026-05-20'),
-
-('Hamza Malik', 'O-', 'Islamabad',
- 33.6900, 73.0600, '03031234567', '2026-01-10'),
-
-('Bilal Shah', 'AB+', 'Islamabad',
- 33.6750, 73.0550, '03041234567', '2026-04-15'),
-
--- Rawalpindi
-('Saad Ahmed', 'A-', 'Rawalpindi',
- 33.5651, 73.0169, '03051234567', '2026-02-01'),
-
-('Fahad Ali', 'O+', 'Rawalpindi',
- 33.6000, 73.0500, '03061234567', '2026-05-01'),
-
-('Danish Raza', 'B-', 'Rawalpindi',
- 33.5800, 73.0300, '03071234567', '2026-03-01'),
-
-('Adeel Khan', 'AB-', 'Rawalpindi',
- 33.5900, 73.0200, '03081234567', '2026-01-20'),
-
--- Lahore
-('Ahmed Hassan', 'O-', 'Lahore',
- 31.5204, 74.3587, '03091234567', '2026-04-10'),
-
-('Zain Ali', 'A+', 'Lahore',
- 31.5000, 74.3400, '03101234567', '2026-05-15'),
-
-('Talha Saeed', 'B+', 'Lahore',
- 31.5300, 74.3700, '03111234567', '2026-02-15'),
-
--- Karachi
-('Ahmed Raza', 'O+', 'Karachi',
- 24.8607, 67.0011, '03121234567', '2026-04-20'),
-
-('Muneeb Khan', 'A-', 'Karachi',
- 24.8700, 67.0100, '03131234567', '2026-03-10'),
-
-('Shahzaib Ali', 'B+', 'Karachi',
- 24.8500, 67.0200, '03141234567', '2026-05-05'),
-
--- Peshawar
-('Waleed Khan', 'O+', 'Peshawar',
- 34.0151, 71.5249, '03151234567', '2026-04-05'),
-
-('Arham Shah', 'AB+', 'Peshawar',
- 34.0200, 71.5300, '03161234567', '2026-02-20'),
-
--- Multan
-('Rayan Ahmed', 'A+', 'Multan',
- 30.1575, 71.5249, '03171234567', '2026-05-10'),
-
-('Huzaifa Malik', 'O-', 'Multan',
- 30.1600, 71.5300, '03181234567', '2026-03-20'),
-
--- Intentionally recently donated donor
-('Usman Khan', 'O+', 'Islamabad',
- 33.6850, 73.0480, '03191234567', '2026-06-20');
-
 
 -- ============================================================
 -- SAMPLE BLOOD REQUESTS
@@ -168,10 +102,16 @@ VALUES
     '2026-08-11T09:20:00'
 );
 
-
 -- ============================================================
 -- SAMPLE OUTREACH LOG
 -- ============================================================
+-- NOTE: donor_id values below (1, 2, 3, 4, 10) simply reference
+-- whichever donors end up at those row positions after
+-- load_donors.py runs - real names/blood types will differ from
+-- the original hand-written version, but the IDs will still exist
+-- since the CSV loads 200 rows. This is fine for demoing the
+-- outreach_log/escalation_log mechanics; it's not meant to be a
+-- perfectly consistent narrative against the current donor names.
 
 INSERT INTO outreach_log
 (
@@ -229,7 +169,6 @@ VALUES
     NULL
 );
 
-
 -- ============================================================
 -- SAMPLE ESCALATION LOG
 -- ============================================================
@@ -248,7 +187,6 @@ VALUES
     'No sufficient compatible donors responded within the escalation window.',
     '2026-08-11T09:30:00'
 );
-
 
 -- ============================================================
 -- VERIFY SEEDED DATA

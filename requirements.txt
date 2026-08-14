@@ -9,6 +9,7 @@ anthropic==0.34.2          # for LLM-assisted extraction / message generation
 # --- Rules, ranking, data (Module A) ---
 pandas==2.2.2
 geopy==2.4.1
+faker==30.8.2
 
 # --- Agent orchestration (Module C) ---
 apscheduler==3.10.4

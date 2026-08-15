@@ -4,7 +4,7 @@ The "brain" of Module C: filters + ranks donors for a request, then drives
 the plan -> act -> observe -> replan loop by calling outreach.py and
 escalation.py.
 
-Uses Daniyal's real rules/ functions now that they exist:
+Uses Daniyal's real rules/ functions:
   - rules/compatibility.py -> is_compatible()
   - rules/eligibility.py   -> is_eligible()
   - rules/geolocation.py   -> filter_donors_by_radius()
@@ -63,9 +63,22 @@ def shortlist_donors(request: dict, radius_km: float, relax_compatibility: bool 
     return nearby
 
 
-def run_agent_loop(request_id: int, simulate: bool = True, top_n: int = 5) -> None:
+def run_agent_loop_steps(request_id: int, simulate: bool = True, top_n: int = 5):
     """
-    The autonomous plan -> act -> observe -> replan loop for one request.
+    Same plan -> act -> observe -> replan loop as run_agent_loop, but as a
+    GENERATOR that yields the agent's state after every step instead of
+    only returning once at the very end.
+
+    This exists so a UI (like the dashboard's live map) can show the
+    search radius actually growing, donors being contacted, and escalation
+    reasons appearing one at a time - instead of only seeing the final
+    outcome with no visibility into how the agent got there.
+
+    Each yielded dict contains:
+        radius_km, relax_compatibility, contacted (list of donor dicts
+        with lat/lon/distance), confirmed, units_needed, status
+        ("in_progress" | "escalating" | "resolved" | "escalated"),
+        and optionally action / reason when an escalation just happened.
     """
     request = get_request(request_id)
     if request is None:
@@ -75,26 +88,34 @@ def run_agent_loop(request_id: int, simulate: bool = True, top_n: int = 5) -> No
     radius_km = config.DEFAULT_SEARCH_RADIUS_KM
     relax_compatibility = False
     units_needed = request["units_needed"] or config.MIN_CONFIRMATIONS_NEEDED_DEFAULT
-
     escalation_actions_used = set()
 
     while True:
         candidates = shortlist_donors(request, radius_km, relax_compatibility)
         contacted = outreach.contact_donors(candidates[:top_n], request)
-        print(f"[orchestrator] Contacted {len(contacted)} donor(s) for request {request_id}")
-
         confirmed = escalation.count_confirmations(request_id, simulate=simulate)
+
+        base_state = {
+            "request": request,
+            "radius_km": radius_km,
+            "relax_compatibility": relax_compatibility,
+            "contacted": contacted,
+            "confirmed": confirmed,
+            "units_needed": units_needed,
+        }
 
         if confirmed >= units_needed:
             update_request_status(request_id, "resolved")
-            print(f"[orchestrator] Request {request_id} resolved ({confirmed}/{units_needed} confirmed)")
+            yield {**base_state, "status": "resolved"}
             return
+
+        yield {**base_state, "status": "in_progress"}
 
         decision = escalation.decide_next_action(escalation_actions_used)
         if decision is None:
             update_request_status(request_id, "escalated")
-            print(f"[orchestrator] Request {request_id} exhausted all escalation options "
-                  f"({confirmed}/{units_needed} confirmed) - notify a human coordinator.")
+            yield {**base_state, "status": "escalated",
+                   "reason": "All escalation options exhausted - notify a human coordinator."}
             return
 
         action, reason = decision
@@ -107,10 +128,30 @@ def run_agent_loop(request_id: int, simulate: bool = True, top_n: int = 5) -> No
             relax_compatibility = True
         elif action == "notify_blood_bank":
             update_request_status(request_id, "escalated")
-            print(f"[orchestrator] Blood bank notified for request {request_id}. Ending automated loop.")
+            yield {**base_state, "status": "escalated", "action": action, "reason": reason}
             return
 
-        print(f"[orchestrator] Escalating: {action} - {reason}")
+        yield {**base_state, "status": "escalating", "action": action, "reason": reason}
+
+
+def run_agent_loop(request_id: int, simulate: bool = True, top_n: int = 5) -> None:
+    """
+    Console-friendly wrapper around run_agent_loop_steps - prints progress
+    and runs to completion. Kept for backward compatibility (e.g. running
+    `python agent/orchestrator.py` directly).
+    """
+    for state in run_agent_loop_steps(request_id, simulate=simulate, top_n=top_n):
+        print(f"[orchestrator] Contacted {len(state['contacted'])} donor(s) "
+              f"for request {request_id} (radius={state['radius_km']}km)")
+
+        if state["status"] == "resolved":
+            print(f"[orchestrator] Request {request_id} resolved "
+                  f"({state['confirmed']}/{state['units_needed']} confirmed)")
+        elif state["status"] == "escalating":
+            print(f"[orchestrator] Escalating: {state['action']} - {state['reason']}")
+        elif state["status"] == "escalated":
+            print(f"[orchestrator] Request {request_id} escalated "
+                  f"({state['confirmed']}/{state['units_needed']} confirmed) - {state['reason']}")
 
 
 if __name__ == "__main__":

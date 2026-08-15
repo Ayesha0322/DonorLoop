@@ -24,6 +24,8 @@ import re
 from typing import Optional
 
 import spacy
+from geopy.geocoders import Nominatim
+from geopy.exc import GeocoderTimedOut, GeocoderServiceError
 
 from nlp.urgency_classifier import classify_urgency
 
@@ -232,6 +234,42 @@ def get_coordinates(location: Optional[str]):
     return None, None
 
 
+# Single shared geocoder instance - Nominatim (OpenStreetMap) is free and
+# needs no API key, but does require a descriptive user_agent per its
+# usage policy, and is rate-limited (~1 request/sec) - fine for a demo,
+# not meant for high-volume production use.
+_geolocator = Nominatim(user_agent="donorloop-mvp-demo")
+
+
+def geocode_hospital(hospital_name: str, city: Optional[str] = None, country_hint: str = "Pakistan"):
+    """
+    Looks up the SPECIFIC hospital's real location via OpenStreetMap, not
+    just its city's center point. Including the city as a hint (when known)
+    makes the match far more accurate/less ambiguous - "Jinnah Hospital,
+    Lahore, Pakistan" resolves correctly; "Jinnah Hospital, Pakistan" alone
+    is more likely to mismatch since several cities have a hospital by that
+    name.
+
+    Returns:
+        (latitude, longitude) or (None, None) if not found or the geocoding
+        service is unreachable (e.g. no internet) - callers should treat
+        that the same as "location unknown", not crash.
+    """
+    if not hospital_name:
+        return None, None
+
+    query = f"{hospital_name}, {city}, {country_hint}" if city else f"{hospital_name}, {country_hint}"
+
+    try:
+        result = _geolocator.geocode(query, timeout=5)
+        if result:
+            return result.latitude, result.longitude
+    except (GeocoderTimedOut, GeocoderServiceError):
+        pass
+
+    return None, None
+
+
 # ------------------------------------------------------------
 # Complete NLP request processing
 # ------------------------------------------------------------
@@ -259,7 +297,14 @@ def process_request(text: str) -> dict:
     hospital = extract_hospital(text)
     location = extract_location(text)
 
-    latitude, longitude = get_coordinates(location)
+    # Try to pinpoint the SPECIFIC hospital first (uses the city as a hint
+    # when we have one, for a more accurate match). Only fall back to the
+    # city's fixed center point - which is coarse and identical for every
+    # hospital in that city - if the specific lookup fails entirely.
+    latitude, longitude = geocode_hospital(hospital, city=location) if hospital else (None, None)
+
+    if latitude is None:
+        latitude, longitude = get_coordinates(location)
 
     urgency = classify_urgency(text)
 

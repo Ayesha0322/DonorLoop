@@ -1,0 +1,107 @@
+[
+  {
+    "request_id": "REQ001",
+    "message": "Urgent! We need 2 units of O+ blood at a hospital in Karachi.The patient is in critical condition.",
+    "expected": {
+      "blood_type": "O+",
+      "location": "Karachi",
+      "units_needed": 2,
+      "urgency": "critical"
+    }
+  },
+  {
+    "request_id": "REQ002",
+    "message": "We need one unit of A+ blood in Karachi for a patient who needs blood soon.This is a high priority request.",
+    "expected": {
+      "blood_type": "A+",
+      "location": "Karachi",
+      "units_needed": 1,
+      "urgency": "high"
+    }
+  },
+  {
+    "request_id": "REQ003",
+    "message": "Looking for 3 units of B+ blood in Hyderabad for a scheduled procedure.It is not an emergency.",
+    "expected": {
+      "blood_type": "B+",
+      "location": "Hyderabad",
+      "units_needed": 3,
+      "urgency": "routine"
+    }
+  },
+  {
+    "request_id": "REQ004",
+    "message": "Critical request:1 unit of AB- blood is needed immediately in Karachi for a patient undergoing emergency treatment.",
+    "expected": {
+      "blood_type": "AB-",
+      "location": "Karachi",
+      "units_needed": 1,
+      "urgency": "critical"
+    }
+  },
+  {
+    "request_id": "REQ005",
+    "message": "Please help us find 1 units of O+ blood in Karachi.The patient needs the blood urgently.",
+    "expected": {
+      "blood_type": "O+",
+      "location": "Karachi",
+      "units_needed": 1,
+      "urgency": "high"
+    }
+  },
+  {
+    "request_id": "REQ006",
+    "message": "We need one unit of A- blood in Hyderabad for a planned transfusion.This is a routine request.",
+    "expected": {
+      "blood_type": "A-",
+      "location": "Hyderabad",
+      "units_needed": 1,
+      "urgency": "routine"
+    }
+  },
+  { 
+    "request_id" : "REQ007",
+    "message" : "Please share this , We need 2 units of AB- blood in Islamabad for a patient undergoing treatment.",
+    "expected" : {
+        "blood_type": "AB-",
+        "location" :"Islamabad",
+        "units_needed" : 2,
+        "urgency" : "routine"
+
+    }
+  },
+  {
+    "request_id" : "REQ008",
+    "message" : "Emergency! We urgently need 3 units of O+ blood in Sahiwal for a patient in critical condition. Please help immediately if you can donate.",
+    "expected" : {
+        "blood_type": "O+",
+        "location" :"Sahiwal",
+        "units_needed" : 3,
+        "urgency" : "critical"
+
+     }
+  },
+  {
+    "request_id" : "REQ009",
+    "message" : "Please help us find 4 units of A+ blood in Lahore for a patient who needs blood urgently.",
+    "expected" : {
+        "blood_type": "A+",
+        "location" :"Lahore",
+        "units_needed" : 4,
+        "urgency" : "high"
+
+     }
+  },
+  {
+    "request_id" : "REQ010",
+    "message" : "We are looking for 1 unit of B- blood in Quetta , It is quite urgent.",
+    "expected" : {
+        "blood_type": "B-",
+        "location" :"Quetta",
+        "units_needed" : 1,
+        "urgency" : "high"
+
+     }
+  }
+
+]
